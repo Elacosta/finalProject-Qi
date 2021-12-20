@@ -2,6 +2,7 @@ package lima.leandro.FinalProjectWebIII.controller;
 
 import lima.leandro.FinalProjectWebIII.model.CompanyEntity;
 import lima.leandro.FinalProjectWebIII.repository.CompanyRepository;
+import lima.leandro.FinalProjectWebIII.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,15 +25,25 @@ import java.util.Optional;
 public class CompanyController {
 
     @Autowired
-    private CompanyRepository companyRepository;
+    private CompanySaveService companySaveService;
+
+    @Autowired
+    private CompanyUpdateService companyUpdateService;
+
+    @Autowired
+    private CompanyFindByIdService companyFindByIdService;
+
+    @Autowired
+    private CompanyFindAllService companyFindAllService;
+
+    @Autowired
+    private CompanyDeleteService companyDeleteService;
 
     @PostMapping()
     public ResponseEntity<CompanyEntity> save(@RequestBody CompanyEntity companyEntity) {
 
-        CompanyEntity company = this.companyRepository.save(companyEntity);
-
         return new ResponseEntity<CompanyEntity>(
-                company,
+                this.companySaveService.save(companyEntity),
                 new HttpHeaders(),
                 HttpStatus.CREATED
         );
@@ -41,7 +52,7 @@ public class CompanyController {
     @GetMapping()
     public ResponseEntity<List<CompanyEntity>> findAll() {
         return new ResponseEntity<List<CompanyEntity>>(
-                (List<CompanyEntity>) this.companyRepository.findAll(),
+                this.companyFindAllService.findAll(),
                 new HttpHeaders(),
                 HttpStatus.OK
         );
@@ -50,7 +61,7 @@ public class CompanyController {
     @GetMapping(path = "/{id}")
     public ResponseEntity<Optional<CompanyEntity>> findById(@PathVariable("id") long id) {
         return new ResponseEntity<Optional<CompanyEntity>>(
-                this.companyRepository.findById(id),
+                this.companyFindByIdService.findById(id),
                 new HttpHeaders(),
                 HttpStatus.OK
         );
@@ -58,11 +69,8 @@ public class CompanyController {
 
     @PutMapping()
     public ResponseEntity<CompanyEntity> update(@RequestBody CompanyEntity companyEntity) {
-
-        CompanyEntity company = this.companyRepository.save(companyEntity);
-
         return new ResponseEntity<CompanyEntity>(
-                company,
+                this.companyUpdateService.update(companyEntity),
                 new HttpHeaders(),
                 HttpStatus.OK
         );
@@ -72,26 +80,23 @@ public class CompanyController {
     public ResponseEntity<HashMap<String, String>> delete(@PathVariable("id") long id) {
 
         HashMap<String, String> map = new HashMap<>();
-
-        if (this.companyRepository.existsById(id)) {
-            this.companyRepository.deleteById(id);
-            map.put("success","true");
-            map.put("message","excluído com sucesso");
-
+        if (this.companyDeleteService.deleteById(id)) {
+            map.put("success", "true");
+            map.put("message", "excluído com sucesso");
             return new ResponseEntity<HashMap<String, String>>(
                     map,
                     new HttpHeaders(),
                     HttpStatus.OK
             );
+        } else {
+            map.put("success", "false");
+            map.put("message", "Código inválido");
+
+            return new ResponseEntity<HashMap<String, String>>(
+                    map,
+                    new HttpHeaders(),
+                    HttpStatus.NOT_FOUND
+            );
         }
-
-        map.put("success","false");
-        map.put("message","Código inválido");
-
-        return new ResponseEntity<HashMap<String, String>>(
-                map,
-                new HttpHeaders(),
-                HttpStatus.NOT_FOUND
-        );
     }
 }
